@@ -14,7 +14,7 @@ from safe_control.tracking import LocalTrackingController, InfeasibleError
 from safety_loss_function import SafetyLossFunction
 
 # Use a non-interactive backend for matplotlib to avoid display issues
-# matplotlib.use('Agg')
+matplotlib.use('Agg')
 
 # Suppress print statements during simulations
 class SuppressPrints:
@@ -87,7 +87,7 @@ def single_agent_simulation(distance, velocity_x, velocity_z, theta, gamma0, gam
         tracking_controller = LocalTrackingController(x_init, robot_spec,
                                                     control_type=control_type,
                                                     dt=dt,
-                                                    show_animation=True,
+                                                    show_animation=False,
                                                     save_animation=False,
                                                     ax=ax, fig=fig,
                                                     env=env_handler)
@@ -214,17 +214,17 @@ def concatenate_csv_files(output_filename, total_batches):
 
 
 if __name__ == "__main__":
-    single_agent_simulation(3.0, 0.5, 0.5, np.pi, 1., 1.)
+    # single_agent_simulation(3.0, 0.5, 0.5, np.pi/6, 1., 1.)
 
-    # samples_per_dimension = 6   # Number of samples per dimension
-    # batch_size = (samples_per_dimension-1)**6           # Specify the batch size
-    # num_processes = 6           # Change based on the number of cores available
+    samples_per_dimension = 6   # Number of samples per dimension
+    batch_size = (samples_per_dimension-1)**6           # Specify the batch size
+    num_processes = 6           # Change based on the number of cores available
 
-    # total_datapoints = samples_per_dimension ** 6
-    # total_batches = total_datapoints // batch_size + (1 if total_datapoints % batch_size != 0 else 0)
+    total_datapoints = samples_per_dimension ** 6
+    total_batches = total_datapoints // batch_size + (1 if total_datapoints % batch_size != 0 else 0)
 
-    # # Generate simulation data and concatenate results
-    # generate_data(samples_per_dimension, num_processes, batch_size)
-    # concatenate_csv_files(f'data_generation_results_{samples_per_dimension}datapoint_1206.csv', total_batches)
+    # Generate simulation data and concatenate results
+    generate_data(samples_per_dimension, num_processes, batch_size)
+    concatenate_csv_files(f'data_generation_results_{samples_per_dimension}datapoint_1206.csv', total_batches)
 
-    # print("Data generation complete.")
+    print("Data generation complete.")
