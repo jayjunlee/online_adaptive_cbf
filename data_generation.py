@@ -14,7 +14,7 @@ from safe_control.tracking import LocalTrackingController, InfeasibleError
 from safety_loss_function import SafetyLossFunction
 
 # Use a non-interactive backend for matplotlib to avoid display issues
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 
 # Suppress print statements during simulations
 class SuppressPrints:
@@ -51,7 +51,7 @@ def get_safety_loss_from_controller(tracking_controller, safety_metric):
     
     return safety_loss
 
-def single_agent_simulation(distance, velocity, theta, gamma0, gamma1, deadlock_threshold=0.2, max_sim_time=25):
+def single_agent_simulation(distance, velocity_x, velocity_z, theta, gamma0, gamma1, deadlock_threshold=0.2, max_sim_time=25):
     '''
     Run a single agent simulation to evaluate safety loss and deadlock
     '''
@@ -63,7 +63,7 @@ def single_agent_simulation(distance, velocity, theta, gamma0, gamma1, deadlock_
             [1, 2, theta],
             [8, 2, 0]
         ], dtype=np.float64)
-        x_init = np.append(waypoints[0], velocity)
+        x_init = np.append(waypoints[0], [velocity_x, velocity_z, 0])
         
         # Define known obstacles
         obstacles = [
@@ -77,18 +77,17 @@ def single_agent_simulation(distance, velocity, theta, gamma0, gamma1, deadlock_
 
         # Set up the robot specifications
         robot_spec = {
-            'model': 'DynamicUnicycle2D',
-            'w_max': 0.5,
-            'a_max': 0.5,
-            'fov_angle': 70.0,
-            'cam_range': 3.0,
-            'radius': 0.3
+            'model': 'Quad2D',
+            'f_min': 3.0,
+            'f_max': 10.0,
+            'sensor': 'rgbd',
+            'radius': 0.25
         }
         control_type = 'mpc_cbf'
         tracking_controller = LocalTrackingController(x_init, robot_spec,
                                                     control_type=control_type,
                                                     dt=dt,
-                                                    show_animation=False,
+                                                    show_animation=True,
                                                     save_animation=False,
                                                     ax=ax, fig=fig,
                                                     env=env_handler)
@@ -138,24 +137,24 @@ def single_agent_simulation(distance, velocity, theta, gamma0, gamma1, deadlock_
             except InfeasibleError:
                 plt.ioff()
                 plt.close()
-                return (distance, velocity, theta, gamma0, gamma1, False, max_safety_loss, deadlock_time, sim_time)
+                return (distance, velocity_x, velocity_z, theta, gamma0, gamma1, False, max_safety_loss, deadlock_time, sim_time)
                 
         plt.ioff()
         plt.close()
-        return (distance, velocity, theta, gamma0, gamma1, True, safety_loss, deadlock_time, sim_time)
+        return (distance, velocity_x, velocity_z, theta, gamma0, gamma1, True, safety_loss, deadlock_time, sim_time)
 
     except InfeasibleError:
         plt.ioff()
         plt.close()
-        return (distance, velocity, theta, gamma0, gamma1, False, max_safety_loss, deadlock_time, sim_time)
+        return (distance, velocity_x, velocity_z, theta, gamma0, gamma1, False, max_safety_loss, deadlock_time, sim_time)
 
 def worker(params):
     '''
     Worker function for parallel processing
     '''
-    distance, velocity, theta, gamma0, gamma1 = params
+    distance, velocity_x, velocity_z, theta, gamma0, gamma1 = params
     with SuppressPrints():  # Suppress output during the simulation
-        result = single_agent_simulation(distance, velocity, theta, gamma0, gamma1)
+        result = single_agent_simulation(distance, velocity_x, velocity_z, theta, gamma0, gamma1)
     return result
 
 def generate_data(samples_per_dimension=5, num_processes=8, batch_size=6):
@@ -163,13 +162,15 @@ def generate_data(samples_per_dimension=5, num_processes=8, batch_size=6):
     Generate simulation data by running simulations in parallel
     '''
     # Define ranges for the parameter space
-    distance_range = np.linspace(0.55, 3.0, samples_per_dimension)
-    velocity_range = np.linspace(0.01, 1.0, samples_per_dimension)
-    theta_range = np.linspace(0, np.pi, samples_per_dimension)
-    gamma0_range = np.linspace(0.01, 0.18, samples_per_dimension)
-    gamma1_range = np.linspace(0.01, 0.18, samples_per_dimension)
-    parameter_space = [(d, v, theta, g1, g2) for d in distance_range
-                       for v in velocity_range
+    distance_range = np.linspace(0.62, 3.0, samples_per_dimension)
+    velocity_x_range = np.linspace(0.01, 1.0, samples_per_dimension)
+    velocity_z_range = np.linspace(0.01, 1.0, samples_per_dimension)
+    theta_range = np.linspace(0, np.pi/6, samples_per_dimension)
+    gamma0_range = np.linspace(0.01, 1.1, samples_per_dimension)
+    gamma1_range = np.linspace(0.01, 1.1, samples_per_dimension)
+    parameter_space = [(d, v_x, v_z, theta, g1, g2) for d in distance_range
+                       for v_x in velocity_x_range
+                       for v_z in velocity_z_range
                        for theta in theta_range
                        for g1 in gamma0_range
                        for g2 in gamma1_range]
@@ -190,7 +191,7 @@ def generate_data(samples_per_dimension=5, num_processes=8, batch_size=6):
         pool.join()
 
         # Store results in a DataFrame and save to a CSV file
-        columns = ['Distance', 'Velocity', 'Theta', 'gamma0', 'gamma1', 'No Collision', 'Safety Loss', 'Deadlock Time', 'Simulation Time']
+        columns = ['Distance', 'VelocityX', 'VelocityZ', 'Theta', 'gamma0', 'gamma1', 'No Collision', 'Safety Loss', 'Deadlock Time', 'Simulation Time']
         df = pd.DataFrame(results, columns=columns)
         df.to_csv(f'data_generation_results_batch_{batch_index + 1}.csv', index=False)
 
@@ -213,15 +214,17 @@ def concatenate_csv_files(output_filename, total_batches):
 
 
 if __name__ == "__main__":
-    samples_per_dimension = 7   # Number of samples per dimension
-    batch_size = 6**5           # Specify the batch size
-    num_processes = 6           # Change based on the number of cores available
+    single_agent_simulation(3.0, 0.5, 0.5, np.pi, 1., 1.)
 
-    total_datapoints = samples_per_dimension ** 5
-    total_batches = total_datapoints // batch_size + (1 if total_datapoints % batch_size != 0 else 0)
+    # samples_per_dimension = 6   # Number of samples per dimension
+    # batch_size = (samples_per_dimension-1)**6           # Specify the batch size
+    # num_processes = 6           # Change based on the number of cores available
 
-    # Generate simulation data and concatenate results
-    generate_data(samples_per_dimension, num_processes, batch_size)
-    concatenate_csv_files(f'data_generation_results_{samples_per_dimension}datapoint_0907.csv', total_batches)
+    # total_datapoints = samples_per_dimension ** 6
+    # total_batches = total_datapoints // batch_size + (1 if total_datapoints % batch_size != 0 else 0)
 
-    print("Data generation complete.")
+    # # Generate simulation data and concatenate results
+    # generate_data(samples_per_dimension, num_processes, batch_size)
+    # concatenate_csv_files(f'data_generation_results_{samples_per_dimension}datapoint_1206.csv', total_batches)
+
+    # print("Data generation complete.")

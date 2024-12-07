@@ -15,7 +15,7 @@ setup(
         'do-mpc[full]',
         'pandas',
         'tqdm',
-        'plotly'
+        'plotly'    
         'torch'
     ],
     include_package_data=True,

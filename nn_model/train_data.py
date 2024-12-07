@@ -16,7 +16,7 @@ from penn.nn_iccbf_predict import ProbabilisticEnsembleNN
 ACTIVATION = 'relu'
 
 # Name or model and saving path
-DATANAME = 'data_generation_results_5datapoint'
+DATANAME = 'data_generation_results_2datapoint_1206'
 MODELNAME_SAVE = 'penn_model_1111'
 data_file = 'data/' + DATANAME + '.csv'
 scaler_path = 'checkpoint/scaler_1111.save'
@@ -24,14 +24,14 @@ model_path = 'checkpoint/' + MODELNAME_SAVE + '.pth'
 
 # Neural Network Paramters
 device = 'cpu'
-n_states = 6
+n_states = 7
 n_output = 2
 n_hidden = 40
 n_ensemble = 3
 
 LR = 0.0001
 BATCHSIZE = 32
-EPOCH = 1500
+EPOCH = 2000
 
 
 def load_and_preprocess_data(data_file, scaler_path=None, noise_percentage=0.0):
@@ -39,16 +39,16 @@ def load_and_preprocess_data(data_file, scaler_path=None, noise_percentage=0.0):
     dataset = pd.read_csv(data_file)
 
     # Define input features and outputs
-    X = dataset[['Distance', 'Velocity', 'Theta', 'gamma0', 'gamma1']].values
+    X = dataset[['Distance', 'VelocityX', 'VelocityZ', 'Theta', 'gamma0', 'gamma1']].values
     y = dataset[['Safety Loss', 'Deadlock Time']].values 
 
     # Apply noise to Distance, Velocity, and Theta
-    noise = np.random.randn(*X[:, :3].shape) * noise_percentage / 100
-    X[:, :3] += X[:, :3] * noise
+    noise = np.random.randn(*X[:, :4].shape) * noise_percentage / 100
+    X[:, :4] += X[:, :4] * noise
 
     # Transform Theta into sine and cosine components
-    Theta = X[:, 2]
-    X_transformed = np.column_stack((X[:, :2], np.sin(Theta), np.cos(Theta), X[:, 3:]))
+    Theta = X[:, 3]
+    X_transformed = np.column_stack((X[:, :3], np.sin(Theta), np.cos(Theta), X[:, 4:]))
 
     # Initialize the scaler
     scaler = StandardScaler()
@@ -93,7 +93,7 @@ def plot_gmm(gmm):
     plt.show()
 
 if __name__ == '__main__':
-    Test = True
+    Test = False
     
     seed = 42
     torch.manual_seed(seed)
