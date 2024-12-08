@@ -210,13 +210,13 @@ def single_agent_simulation(velocity_x, velocity_z, waypoints, known_obs, contro
                                                 control_type=controller,
                                                 dt=dt,
                                                 show_animation=True,
-                                                save_animation=False,
+                                                save_animation=True,
                                                 ax=ax, fig=fig,
                                                 env=env_handler)
 
     # Initialize OnlineCBFAdapter if adaptation is enabled
     if adapt_cbf:
-        online_cbf_adapter = OnlineCBFAdapter('nn_model/checkpoint/penn_model_1111.pth', 'nn_model/checkpoint/scaler_1111.save')
+        online_cbf_adapter = OnlineCBFAdapter('nn_model/checkpoint/penn_model_1.pth', 'nn_model/checkpoint/scaler_1.save')
 
     # Set initial gamma values for the CBF
     tracking_controller.pos_controller.cbf_param['alpha1'] = gamma0
@@ -252,7 +252,7 @@ def single_agent_simulation(velocity_x, velocity_z, waypoints, known_obs, contro
 if __name__ == "__main__":
     # List of controller strategies
     controller_list = ['MPC-CBF low fixed param', 'MPC-CBF high fixed param', 'Optimal Decay CBF-QP', 'Optimal Decay MPC-CBF', 'Online Adaptive CBF']
-    controller_name = controller_list[1]
+    controller_name = controller_list[4]
     
     # Define waypoints and obstacles for the simulation
     waypoints = np.array([
@@ -266,9 +266,9 @@ if __name__ == "__main__":
     #                       [6.5, 2.6, 1.05], [8.5, 0.4, 0.2],
     #                       [8, 0.6, 0.35], [7.5, 2.3, 0.45],])
     
-    known_obs = np.array([[4.0, 0.3, 0.3], [3.5, 0.5, 0.4], [3.5, 2.4, 0.5],
-                          [6.5, 2.6, 1.05],
-                          [8.2, 1.25, 0.3], [7.5, 2.3, 0.45],])
+    known_obs = np.array([[4.0, 0.1, 0.3], [3.5, 0.3, 0.4], [3.5, 3.0, 0.5],
+                          [6.5, 3.1, 1.05],
+                          [8.2, 2.5, 0.3], [7.5, 2.7, 0.45],])
 
     # Run the simulation
     single_agent_simulation(init_vel_x, init_vel_z, waypoints, known_obs=known_obs, controller_name=controller_name)

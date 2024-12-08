@@ -165,7 +165,7 @@ def generate_data(samples_per_dimension=5, num_processes=8, batch_size=6):
     distance_range = np.linspace(0.62, 3.0, samples_per_dimension)
     velocity_x_range = np.linspace(0.01, 1.0, samples_per_dimension)
     velocity_z_range = np.linspace(0.01, 1.0, samples_per_dimension)
-    theta_range = np.linspace(0, np.pi/6, samples_per_dimension)
+    theta_range = np.linspace(-np.pi/6, np.pi/6, samples_per_dimension)
     gamma0_range = np.linspace(0.01, 1.1, samples_per_dimension)
     gamma1_range = np.linspace(0.01, 1.1, samples_per_dimension)
     parameter_space = [(d, v_x, v_z, theta, g1, g2) for d in distance_range
@@ -214,17 +214,17 @@ def concatenate_csv_files(output_filename, total_batches):
 
 
 if __name__ == "__main__":
-    # single_agent_simulation(3.0, 0.5, 0.5, np.pi/6, 1., 1.)
+    # single_agent_simulation(0.65, 0.5, 0.5, -np.pi/9, 1., 1.)
 
     samples_per_dimension = 6   # Number of samples per dimension
     batch_size = (samples_per_dimension-1)**6           # Specify the batch size
-    num_processes = 6           # Change based on the number of cores available
+    num_processes = 32           # Change based on the number of cores available
 
     total_datapoints = samples_per_dimension ** 6
     total_batches = total_datapoints // batch_size + (1 if total_datapoints % batch_size != 0 else 0)
 
     # Generate simulation data and concatenate results
     generate_data(samples_per_dimension, num_processes, batch_size)
-    concatenate_csv_files(f'data_generation_results_{samples_per_dimension}datapoint_1206.csv', total_batches)
+    concatenate_csv_files(f'data_generation_results_{samples_per_dimension}datapoint_1207.csv', total_batches)
 
     print("Data generation complete.")

@@ -16,10 +16,10 @@ from penn.nn_iccbf_predict import ProbabilisticEnsembleNN
 ACTIVATION = 'relu'
 
 # Name or model and saving path
-DATANAME = 'data_generation_results_2datapoint_1206'
-MODELNAME_SAVE = 'penn_model_1111'
+DATANAME = 'data_generation_results_6datapoint_1207'
+MODELNAME_SAVE = 'penn_model_1'
 data_file = 'data/' + DATANAME + '.csv'
-scaler_path = 'checkpoint/scaler_1111.save'
+scaler_path = 'checkpoint/scaler_1.save'
 model_path = 'checkpoint/' + MODELNAME_SAVE + '.pth'
 
 # Neural Network Paramters
@@ -30,7 +30,7 @@ n_hidden = 40
 n_ensemble = 3
 
 LR = 0.0001
-BATCHSIZE = 32
+BATCHSIZE = 64
 EPOCH = 2000
 
 
